@@ -1,5 +1,6 @@
 module WideFloat exposing
     ( WideFloat, Content
+    , zero, one
     , create, fromFloat
     , isZero, isLargerThan, isSmallerThan, isEqualTo
     , add, differenceFrom, multiply, multiplyFloat, dividedBy
@@ -12,6 +13,11 @@ module WideFloat exposing
 # Types
 
 @docs WideFloat, Content
+
+
+# Constants
+
+@docs zero, one
 
 
 # Creation
@@ -53,10 +59,29 @@ type WideFloat
     = WideFloat Content
 
 
+{-| `WideFloat` representing 0.
+
+    zero == fromFloat 0 --> True
+
+-}
+zero : WideFloat
 zero =
     WideFloat
-        { base2exponent = -1073741824
+        { base2exponent = -2147483648
         , significand = 0
+        }
+
+
+{-| `WideFloat` representing 1.
+
+    one == fromFloat 1 --> True
+
+-}
+one : WideFloat
+one =
+    WideFloat
+        { base2exponent = 0
+        , significand = 1
         }
 
 
