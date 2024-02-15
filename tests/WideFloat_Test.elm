@@ -50,8 +50,17 @@ suite =
                                         o =
                                             getInternal w
                                     in
-                                    toFloat (2 ^ o.base2exponent)
-                                        * o.significand
+                                    if o.base2toThe1024exponent == 0 then
+                                        o.significand
+
+                                    else if o.base2toThe1024exponent == 1 then
+                                        (o.significand * 2 ^ 512) * 2 ^ 512
+
+                                    else if o.base2toThe1024exponent == -1 then
+                                        (o.significand * 2 ^ -512) * 2 ^ -512
+
+                                    else
+                                        0 / 0
                                 )
                             |> Dict.insert "proportion"
                                 (proportionOf wa wb)

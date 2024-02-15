@@ -53,7 +53,7 @@ type alias Content =
     }
 
 
-{-| Opaque type that represents floating point number with 32 exponent bits and 52 significand bits.
+{-| Opaque type that represents floating point number with 42 exponent bits and 52 significand bits.
 -}
 type WideFloat
     = WideFloat Content
@@ -98,7 +98,10 @@ fix c =
         abs =
             c.significand * sgn
     in
-    if abs - twoToThe512 >= 0 then
+    if abs == 0 then
+        zero
+
+    else if abs - twoToThe512 >= 0 then
         WideFloat
             { base2toThe1024exponent =
                 c.base2toThe1024exponent + 1
@@ -120,11 +123,10 @@ fix c =
         WideFloat c
 
 
-{-| Creates a `WideFloat` value from specified exponent and significand. If the absolute value of given significand is greater 2 or less than 1, _n_ is added to the exponent and _2^(-n)_ is multiplied to the significand where _n_ denote `floor (logBase 2 (abs significand))`
+{-| Creates a `WideFloat` value from specified exponent and significand. The value `create { base2toThe1024exponent = e, significand = f}` corresponds to _f \* (2^1024)^e_.
 
-    create { base2toThe1024exponent = 0, significand = 10 }
-        == create { base2toThe1024exponent = 3, significand = 1.25 }
-        --> True
+    create { base2toThe1024exponent = 0, significand = 2^513 }
+        |> getInternal --> { base2toThe1024exponent = 1, significand = 2^(-511) }
 
 -}
 create : Content -> WideFloat
@@ -134,9 +136,8 @@ create a =
 
 {-| Creates a `WideFloat` value from specified float
 
-    fromFloat (1024.0 * 1024.0 * 1024.0 * 1024.0)
-        == create { base2toThe1024exponent = 40, significand = 1 }
-        --> True
+    fromFloat 1
+        == one --> True
 
 -}
 fromFloat : Float -> WideFloat
@@ -153,17 +154,17 @@ fromFloat f =
     w1 =
         create
             { base2toThe1024exponent = 100
-            , significand = 1
+            , significand = 2^(-511)
             }
 
     w2 : WideFloat
     w2 =
         create
             { base2toThe1024exponent = 99
-            , significand = 1
+            , significand = 2^511
             }
 
-    add w1 w2 --> create { base2toThe1024exponent = 100, significand = 1.5 }
+    add w1 w2 --> create { base2toThe1024exponent = 100, significand = 1.25* 2^(-511) }
 
 -}
 add : WideFloat -> WideFloat -> WideFloat
@@ -203,18 +204,18 @@ add (WideFloat w1) (WideFloat w2) =
     w1 : WideFloat
     w1 =
         create
-            { base2toThe1024exponent = 100
-            , significand = 1
+            { base2toThe1024exponent = 1
+            , significand = 2^(-511)
             }
 
     w2 : WideFloat
     w2 =
         create
-            { base2toThe1024exponent = 99
-            , significand = 1.75
+            { base2toThe1024exponent = 0
+            , significand = 2^511
             }
 
-    w1 |> differenceFrom w2 --> create { base2toThe1024exponent = 97, significand = 1.0 }
+    w1 |> differenceFrom w2 --> create { base2toThe1024exponent = 1, significand = 1.5 * 2^(-512) }
 
 -}
 differenceFrom : WideFloat -> WideFloat -> WideFloat
@@ -238,7 +239,7 @@ differenceFrom (WideFloat subtrahend) (WideFloat minuend) =
             , significand = 1.75
             }
 
-    multiply w1 w2 --> create { base2toThe1024exponent = 301, significand = 1.3125 }
+    multiply w1 w2 --> create { base2toThe1024exponent = 300, significand = 2.625 }
 
 -}
 multiply : WideFloat -> WideFloat -> WideFloat
@@ -258,11 +259,11 @@ multiply (WideFloat w1) (WideFloat w2) =
     w : WideFloat
     w =
         create
-            { base2toThe1024exponent = 100
-            , significand = 1
+            { base2toThe1024exponent = 0
+            , significand = 2^(500)
             }
 
-    multiplyFloat 3 w --> create { base2toThe1024exponent = 101, significand = 1.5 }
+    multiplyFloat (2^20) w --> create { base2toThe1024exponent = 1, significand = 256 * 2 ^(-512) }
 
 -}
 multiplyFloat : Float -> WideFloat -> WideFloat
@@ -353,14 +354,14 @@ dividedBy (WideFloat divisor) (WideFloat dividend) =
     fromFloat 1
         |> add
             ( create
-                { base2toThe1024exponent = 50
-                , significand = 1
+                { base2toThe1024exponent = 0
+                , significand = 2^50
                 }
             )
         |> differenceFrom
             ( create
-                { base2toThe1024exponent = 50
-                , significand = 1
+                { base2toThe1024exponent = 0
+                , significand = 2^50
                 }
             )
         |> isZero --> False
@@ -479,10 +480,17 @@ isEqualTo w1 w2 =
     w2 =
         create
             { base2toThe1024exponent = 99
-            , significand = 1
+            , significand = 2^511
             }
 
-    proportionOf w1 w2 == 2.0 / 3.0 --> True
+    p : Float
+    p =
+        proportionOf w1 w2
+
+
+    p <= 0.81 --> True
+
+    p >= 0.5 --> True
 
 -}
 proportionOf : WideFloat -> WideFloat -> Float
@@ -500,10 +508,10 @@ proportionOf (WideFloat w1) (WideFloat w2) =
     else if de == -1 then
         let
             w1s =
-                w1.significand * twoToThe512
+                w1.significand * invTwoToThe512
 
             w2s =
-                w2.significand * invTwoToThe512
+                w2.significand * twoToThe512
         in
         w1s / (w1s + w2s)
 
