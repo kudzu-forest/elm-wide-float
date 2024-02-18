@@ -3,7 +3,7 @@
     "name": "kudzu-forest/elm-wide-float",
     "summary": "Enables floating point arithmetics with 32 exponent bits.",
     "license": "MIT",
-    "version": "2.0.1",
+    "version": "2.0.2",
     "exposed-modules": [
         "WideFloat"
     ],

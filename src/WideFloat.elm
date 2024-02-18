@@ -7,7 +7,7 @@ module WideFloat exposing
     , proportionOf, getInternal, toString
     )
 
-{-| The definitions and functionalities of `WideFloat` type (which is explained in README.md).
+{-| This module provides the definitions and functionalities of `WideFloat` type.
 
 
 # Types
@@ -123,10 +123,16 @@ fix c =
         WideFloat c
 
 
-{-| Creates a `WideFloat` value from specified exponent and significand. The value `create { base2toThe1024exponent = e, significand = f}` corresponds to _f \* (2^1024)^e_.
+{-| Creates a `WideFloat` value from specified exponent and significand. The value `create { base2toThe1024exponent = a, significand = b}` corresponds to _b \* 2^(1024a)_.
 
-    create { base2toThe1024exponent = 0, significand = 2^513 }
-        |> getInternal --> { base2toThe1024exponent = 1, significand = 2^(-511) }
+    create
+        { base2toThe1024exponent = 0
+        , significand = 2 ^ 513
+        }
+        == create
+            { base2toThe1024exponent = 1
+            , significand = 2 ^ -511
+            } -->True
 
 -}
 create : Content -> WideFloat
@@ -164,7 +170,7 @@ fromFloat f =
             , significand = 2^511
             }
 
-    add w1 w2 --> create { base2toThe1024exponent = 100, significand = 1.25* 2^(-511) }
+    add w1 w2 --> create { base2toThe1024exponent = 100, significand = 1.25 * 2^(-511) }
 
 -}
 add : WideFloat -> WideFloat -> WideFloat
@@ -488,9 +494,9 @@ isEqualTo w1 w2 =
         proportionOf w1 w2
 
 
-    p <= 0.81 --> True
+    p <= 0.8001 --> True
 
-    p >= 0.5 --> True
+    p >= 0.7999 --> True
 
 -}
 proportionOf : WideFloat -> WideFloat -> Float
@@ -522,9 +528,11 @@ proportionOf (WideFloat w1) (WideFloat w2) =
 {-| Returns a record representing the inner content of `WideFloat`.
 Inverse function of `create` (when significand is specified properly).
 
-    content : { base2toThe1024exponent : Int, significand : Float}
+    content : Content
     content =
-        { base2toThe1024exponent = 1000, significand = 1.234 }
+        { base2toThe1024exponent = 1000
+        , significand = 1.234
+        }
 
 
     getInternal (create content)
